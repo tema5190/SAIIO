@@ -1,4 +1,5 @@
 #!/usr/bin/python2.7
+# coding=utf-8
 from numpy import *
 
 
@@ -9,7 +10,7 @@ def swap(a, b):
     return a, b
 
 
-def make_basis_graf(n, S):
+def make_basis_graf(n, S): #строим базисный граф, списками смежности
     g = dict()
     for i in xrange(n):
         g[i] = []
@@ -18,13 +19,14 @@ def make_basis_graf(n, S):
         for j in xrange(len(S)):
             if S[j][4] == 1:
                 if i == S[j][0]:
-                    g[i].append(S[j][1])
-                    g[S[j][1]].append(i)
+                    g[i].append(S[j][1]) #Задаем прямую дуга
+                    g[S[j][1]].append(i) #и тут же обратную => чтобы граф был не ориентированным
 
     return g
 
 
-def dfs_u(v, g, S, u, used):
+def dfs_u(v, g, S, u, used): # поиск в глубину чтобы искать потенциалы, проходимся по всем вершинам и смотрим какая вершина является выходом или входом (потому что при решении мы забыли про ориентацию)
+    # чтобы отнимать или добавлять Ui или Uj
     used[v] = True
     for to in g[v]:
         if used[to] == False:
@@ -37,14 +39,14 @@ def dfs_u(v, g, S, u, used):
 
 
 def solve_potensial(n, g, S):
-    used = [False for i in xrange(n)]
-    u = [inf for i in xrange(n)]
+    used = [False for i in xrange(n)] # массив посещенный вершин
+    u = [inf for i in xrange(n)] # потенциалы
     u[0] = 0
-    dfs_u(0, g, S, u, used)
+    dfs_u(0, g, S, u, used) # Запускаем поиск в глубину
     return u
 
 
-def solve_marks(S, u):
+def solve_marks(S, u): # считаем оценки
     delta = []
     for elem in S:
         if elem[4] == 0:
@@ -53,7 +55,7 @@ def solve_marks(S, u):
     return delta
 
 
-def dfs(v, color, p, g):
+def dfs(v, color, p, g): # 2 Функции для поиска циклов (тоже поиск в глубину) => берём все вершины и карсив в 2 цвета (0 и 1) и как только доходим до новой верины красим в 1, когда снова дошли в 1 - нашли цикл
     color[v] = 1
     for to in g[v]:
         if color[to] == 0:
@@ -72,7 +74,7 @@ def dfs(v, color, p, g):
     return False
 
 
-def cycle(uu, n, g):
+def cycle(uu, n, g): #раскраска для поиска цикла
     color = []
     p = []
     for i in xrange(n):
@@ -93,12 +95,12 @@ def cycle(uu, n, g):
 
 def matrics_network_task(n, S):
     while (True):
-        g1 = make_basis_graf(n, S)
-        u = solve_potensial(n, g1, S)
-        delta = solve_marks(S, u)
+        g1 = make_basis_graf(n, S) #строим базисный граф
+        u = solve_potensial(n, g1, S) #считаем потенциалы
+        delta = solve_marks(S, u) # считаем оценки
         temp_list = [elem[1] for elem in delta]
-        max_delta = max(temp_list)
-        if max_delta <= 0:
+        max_delta = max(temp_list) # находим макс оценку
+        if max_delta <= 0: # => +++++
             sum = 0
             for elem in S:
                 sum += elem[2] * elem[3]
@@ -106,19 +108,19 @@ def matrics_network_task(n, S):
             print sum
             return S
 
-        ind = temp_list.index(max_delta)
+        ind = temp_list.index(max_delta) # иначе ищем Jo , Io
         curve_0 = delta[ind][0]
         for i in xrange(len(S)):
             if S[i][0] == curve_0[0] and S[i][1] == curve_0[1]:
-                S[i][4] = 1
+                S[i][4] = 1 # Добавляем в базис
 
-        g2 = make_basis_graf(n, S)
-        U = cycle(curve_0[0], n, g2)
-        U.reverse()
-        U.append(U[0])
+        g2 = make_basis_graf(n, S) # перестраиваем граф
+        U = cycle(curve_0[0], n, g2) # строим для него цикл
+        U.reverse() # переворачиваем потому что храним в обратном порядке
+        U.append(U[0]) # Добавляем нулевую вершину чтобы циклиться
         U_plus = []
         U_minus = []
-        for i in xrange(len(U) - 1):
+        for i in xrange(len(U) - 1): # создаём наши U+ , U-
             for elem in S:
                 if U[i] == elem[0] and U[i + 1] == elem[1]:
                     U_plus.append((U[i], U[i + 1]))
@@ -126,33 +128,33 @@ def matrics_network_task(n, S):
                     U_minus.append((U[i + 1], U[i]))
 
         if curve_0 not in U_plus:
-            U_minus, U_plus = swap(U_minus, U_plus)
+            U_minus, U_plus = swap(U_minus, U_plus) # Когда ищем цикл. Не факт что дуга по направлению может замкнуть цикл. Может не получиться дуга ?
 
-        tetta = []
+        tetta = [] # ищем все тетты
         for elem in S:
             tupl = (elem[0], elem[1])
             if tupl in U_minus:
                 tetta.append((tupl, elem[3]))
 
-        tetta0 = min([tetta[i][1] for i in xrange(len(tetta))])
+        tetta0 = min([tetta[i][1] for i in xrange(len(tetta))]) # ищем минимальную тетту
         for elem in tetta:
             if elem[1] == tetta0:
                 curve_star = elem[0]
                 break
 
-        for curve in U_plus:
+        for curve in U_plus: # Добавлям для всех
             for i in xrange(len(S)):
                 if curve[0] == S[i][0] and curve[1] == S[i][1]:
                     S[i][3] += tetta0
                     break
 
-        for curve in U_minus:
+        for curve in U_minus: # отнимаем
             for i in xrange(len(S)):
                 if curve[0] == S[i][0] and curve[1] == S[i][1]:
                     S[i][3] -= tetta0
                     break
 
-        for i in xrange(len(S)):
+        for i in xrange(len(S)): # убираем дугу из базиса
             if curve_star[0] == S[i][0] and curve_star[1] == S[i][1]:
                 S[i][4] = 0
                 break
@@ -161,7 +163,7 @@ def matrics_network_task(n, S):
 if __name__ == "__main__":
     cycle_st = -1
     cycle_end = -10
-    S = [
+    S = [ # Из какой вершина, в какую, стоимость, поток, 1 - базисная 0 - не базисная
         [0, 1, 7, 2, 1],
         [0, 2, 6, 3, 1],
         [2, 3, 6, 4, 1],

@@ -38,28 +38,28 @@ class IntegerLinearProgrammingSolver(object):
     self.m = res.m
     self.x = res.x
 
-  def create_y(self):
+  def create_y(self): # y - вспомоигательный вектор
     i0 = self.get_index_of_first_float(self.x)
-    ji0 = self.basic_indexes.index(i0)
-    return dot(eye(self.m)[:, ji0], self.B)
+    ji0 = self.basic_indexes.index(i0) # Находим первую не целочисленную переменную
+    return dot(eye(self.m)[:, ji0], self.B) # возвращаем единичный вектор(где лежит не целая) умноженную на B => y
 
-  def change_A(self, y):
-    alpha = dot(y, self.A)
+  def change_A(self, y): #Добавляем ограничения в А
+    alpha = dot(y, self.A) # Сложная магия (математика) из методы
     alpha = array([round(el) if self.is_integer(el) else el for el in alpha])
     alpha = array([el - floor(el) for el in alpha])
     self.A = vstack([self.A, alpha])
     column = -eye(self.m + 1)[:, self.m]
     self.A = hstack([self.A, column.reshape(self.m + 1, 1)])
 
-  def change_b(self, y):
-    betta = dot(y, self.b)
-    betta = betta - floor(betta)
-    self.b = append(self.b, [betta])      
+  def change_b(self, y): # Умножаем y на B, б
+    betta = dot(y, self.b) # получаем число betta
+    betta = betta - floor(betta) # берём его дробную часть
+    self.b = append(self.b, [betta]) # добавляем Дробную betta в наш вектор b
 
-  def change_c(self):
+  def change_c(self): # добавляем 0 для этой переменной в C
     self.c = append(self.c, [0])
 
-  def change_restrictions(self, y):
+  def change_restrictions(self, y): # меняем ограничения
     self.change_A(y)
     self.change_b(y)
     self.change_c()
@@ -68,12 +68,12 @@ class IntegerLinearProgrammingSolver(object):
 
   def the_gomori_method(self):
     while True:
-      res = SimplexMethodSolver(self.A, self.b, self.c).solve()
-      self.change_params(res)
-      if(self.is_integers(self.x)):
+      res = SimplexMethodSolver(self.A, self.b, self.c).solve() # решаем первый раз
+      self.change_params(res) # меняем параметры
+      if(self.is_integers(self.x)): # проверка на целочисленность
         return self
-      y = self.create_y()
-      self.change_restrictions(y)
+      y = self.create_y() # пошла жара
+      self.change_restrictions(y) # меняем и погнали заного
 
 if __name__ == "__main__":
   with open('test2.txt') as file:

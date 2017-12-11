@@ -1,4 +1,5 @@
 #!/usr/bin/python2.7
+# coding=utf-8
 from numpy import *
 import scipy.optimize as sc
 
@@ -26,6 +27,7 @@ def matrix_play(A):
     c = array(c)
     result1 = sc.linprog(c, A_ub = A_ub, b_ub = b_ub, A_eq = A_eq, b_eq = b_eq)
     print result1.x
+
     A_ub2 = copy(A)
     m, n = A_ub2.shape
     A_ub2 = insert(A_ub2, n, -1, axis=1)

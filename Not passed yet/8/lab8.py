@@ -1,22 +1,23 @@
 #!/usr/bin/python2.7
+# coding=utf-8
 from numpy import *
 import Queue
 import code
 
 
-def make_graf(S, n):
+def make_graf(S, n): #строим граф списками смежности
 	g = dict()
 	for i in xrange(n):
 		g[i] = []
 
 	for i in xrange(len(S)):
-		g[S[i][0]].append([S[i][1], S[i][2], 0])
-		g[S[i][1]].append([S[i][0], 0])
+		g[S[i][0]].append([S[i][1], S[i][2], 0]) # для прямых из какой в какую, и поток = 0 изначально
+		g[S[i][1]].append([S[i][0], 0]) # для обатных пропускная способность будет 0
 
-	return g
+	return g # вернули граф
 
 
-def solve_shortest_way(g, n, s, t):
+def solve_shortest_way(g, n, s, t): # поиск в ширину
 	q = Queue.Queue()
 	q.put(s)
 	used = [False for i in xrange(n)]
@@ -52,11 +53,11 @@ def solve_shortest_way(g, n, s, t):
 
 
 def fordFalkerson(S, n, s, t):
-	g = make_graf(S, n)
-	path = solve_shortest_way(g, n, s, t)
-	flow = 0
-	while (len(path) != 0):
-		c = []
+	g = make_graf(S, n) # строим граф
+	path = solve_shortest_way(g, n, s, t) # ищем путь
+	flow = 0 # сразу поток равен 0
+	while (len(path) != 0): # если пути нет - то жопа, иначе работает
+		c = [] # c - массив пропускных способностей для выбранного кратчайшего пути
 		for i in xrange(len(path) - 1):
 			for j in xrange(len(g[path[i]])):
 				if g[path[i]][j][0] == path[i+1]:
@@ -64,21 +65,21 @@ def fordFalkerson(S, n, s, t):
 
 			c.append(g[path[i]][j][1])
 
-		c_min = min(c)
-		for i in xrange(len(path) - 1):
-			for j in xrange(len(g[path[i]])):
+		c_min = min(c) # нашли с мин
+		for i in xrange(len(path) - 1): # some magic
+			for j in xrange(len(g[path[i]])): # проходимся  <-- вспомнить всё
 				if g[path[i]][j][0] == path[i+1]:
 					break
 
-			if (len(g[path[i]][j])) == 3:
-				g[path[i]][j][1] -= c_min
-				g[path[i]][j][2] += c_min
+			if (len(g[path[i]][j])) == 3: #для прямых либо добавляем либо убираем для прямых
+				g[path[i]][j][1] -= c_min # уменьшаем пропускную способнуть
+				g[path[i]][j][2] += c_min # увеличиваем поток
 				for k in xrange(len(g[path[i + 1]])):
 					if g[path[i + 1]][k][0] == path[i]:
 						break
 
 				g[path[i + 1]][k][1] += c_min
-			else:
+			else: # для обратных дуг
 				g[path[i]][j][1] -= c_min
 				for k in xrange(len(g[path[i + 1]])):
 					if g[path[i + 1]][k][0] == path[i]:
@@ -87,10 +88,10 @@ def fordFalkerson(S, n, s, t):
 				g[path[i + 1]][k][1] += c_min
 				g[path[i + 1]][k][2] -= c_min
 
-		flow += c_min
-		path = solve_shortest_way(g, n, s, t)
+		flow += c_min # увеличиваем поток
+		path = solve_shortest_way(g, n, s, t) # снова ищем кратчайший путь
 
-	return [flow, g]
+	return [flow, g] # поток и граф
 
 
 if __name__ == '__main__':
