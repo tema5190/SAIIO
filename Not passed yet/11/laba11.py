@@ -20,7 +20,7 @@ class TravellingSalesmanProblemSolver(object):
         if not self.used[self.assigment_problem_res[v]]:
             self.dfs(self.assigment_problem_res[v])
 
-    def create_components(self):  # вычисляем компоненты плана (подциклы считаем)
+    def create_components(self):  # вычисляем компоненты плана (подциклы считаем типо, но это не точно)
         self.used = [False for _ in xrange(self.n)]
         self.components = []
         self.comp_index = 0
@@ -53,7 +53,7 @@ class TravellingSalesmanProblemSolver(object):
                     self.branch_and_bound()
                     self.c[i][j] = cij  # так пока не кончаться задачи (кончится рекурсия)
 
-    def solve(self):  # просто вызываем метод
+    def solve(self):
         self.branch_and_bound()
         return self
 
